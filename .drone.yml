@@ -1,0 +1,21 @@
+kind: pipeline 
+name: Kernel Builder
+ 
+steps: 
+- name: build
+  image: ubuntu:rolling
+  environment:
+    DEFCONFIG:
+      from_secret: DEFCONFIG
+    LINK:
+      from_secret: LINK
+    TG_API:
+      from_secret: TG_API
+    TG_CHAT:
+      from_secret: TG_CHAT
+    BRANCH:
+      from_secret: BRANCH
+    DEVICE:
+      from_secret: DEVICE
+  commands:
+  - bash ./runner.sh
