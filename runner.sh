@@ -1,9 +1,6 @@
 #!/bin/bash
 echo "***Kernel Builder***"
 BUILD_START=$(date +"%s")
-apt-get update
-apt-get upgrade -y
-apt-get -y update && apt-get -y upgrade && apt-get -y install bc build-essential zip curl libstdc++6 git wget python gcc clang libssl-dev repo rsync flex bison
 echo $TG_API > /tmp/TG_API
 echo $TG_CHAT > /tmp/TG_CHAT
 echo $DEFCONFIG > /tmp/DEFCONFIG
@@ -24,17 +21,13 @@ dpkg-reconfigure --frontend noninteractive tzdata
 echo `pwd` > /tmp/loc
 alias python=python3
 ls
-git clone $(cat /tmp/LINK) -b $(cat /tmp/BRANCH) kernel
-git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
-ls
 CLANG_VERSION=$(clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/ */ /g' -e 's/[[:space:]]*$//')
-TANGGAL=$(date +"%F-%S")
+TANGGAL=$(TZ=Europe/Moscow date +"%Y%m%d-%T")
 ## Copy this script inside the kernel directory
 KERNEL_DEFCONFIG=surya_defconfig
 export CONFIG_PATH=$PWD/arch/arm64/configs/surya_defconfig
 export PATH=$PWD/clang/bin:$PATH
-ANYKERNEL3_DIR=$PWD/kernel/AnyKernel3/
-IMAGE=kernel/out/arch/arm64/boot/Image.gz-dtb
+IMAGE=out/arch/arm64/boot/Image.gz-dtb
 export ARCH=arm64
 export SUBARCH=arm64
 # Speed up build process
@@ -57,7 +50,6 @@ Using compiler: $CLANG_VERSION
 Started on: $(date)
 Build Status: #Wip"
 
-cd kernel
 function compile() {
    make O=out ARCH=arm64 surya_defconfig
        make -j$(nproc --all) O=out \
@@ -91,21 +83,19 @@ function zipping() {
 #-----------------------------------------#
 function upload() {
     ZIP=$(echo *.zip)
+    cd ..
+    bot/telegram -f AnyKernel3/UniKernel-surya-$TANGGAL.zip
     bot/telegram -M "Build completed successfully in $((BUILD_DIFF / 60)) minute(s) and $((BUILD_DIFF % 60)) seconds"
     ls .
-    cd ../..
-    bot/telegram -f kernel/AnyKernel3/UniKernel-surya-$TANGGAL.zip
 
 }
 #-------------------------------------------#
 function error() {
-    cd ..
     ls .
-    bot/telegram -N -M "Build failed in $((BUILD_DIFF / 60)) minute(s) and $((BUILD_DIFF % 60)) seconds
-$((TIME_DIFF / 60)) minute(s) and $((TIME_DIFF % 60)) seconds"
+    bot/telegram -N -M "Build failed in $((BUILD_DIFF / 60)) minute(s) and $((BUILD_DIFF % 60)) seconds"
     exit 1
 }
 CLANG_TRIPLE=aarch64-linux-gnu- 2>&1| tee error.log
 BUILD_END=$(date +"%s")
-DIFF=$((BUILD_END - BUILD_START))
+BUILD_DIFF=$((BUILD_END - BUILD_START))
 compile
