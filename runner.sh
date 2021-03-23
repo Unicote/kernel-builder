@@ -11,13 +11,8 @@ export TELEGRAM_CHAT=$(cat /tmp/TG_CHAT)
 export TZ=Europe/Moscow
 export DEBIAN_FRONTEND=noninteractive
 export DATE=$(TZ=Europe/Moscow date +"%Y%m%d-%T")
-export CLANG_VERSION=$(clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/ */ /g' -e 's/[[:space:]]*$//')
 export DEFCONFIG=surya_defconfig
 export KERNEL_DIR="$(pwd)"
-export ARCH=arm64
-export CONFIG_PATH=$PWD/arch/arm64/configs/surya_defconfig
-export PATH=$PWD/clang/bin:$PATH
-export IMAGE=out/arch/arm64/boot/Image.gz-dtb
 export ARCH=arm64
 export SUBARCH=arm64
 export MODEL="POCO X3 NFC"
@@ -25,7 +20,6 @@ export DEVICE=surya
 export DISTRO=$(cat /etc/issue)
 export KERVER=$(make kernelversion)
 export PROCS=$(nproc --all)
-export KBUILD_COMPILER_STRING=$("$TC_DIR"/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 export LINKER=ld.lld
 export CI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 export COMMIT_HEAD=$(git log --oneline -1)
@@ -68,7 +62,13 @@ clone() {
 	git clone --depth 1 --no-single-branch https://github.com/"$AUTHOR"/AnyKernel3.git
 }
 
-KBUILD_BUILD_USER=$AUTHOR
+export CLANG_VERSION=$(clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/ */ /g' -e 's/[[:space:]]*$//')
+export CONFIG_PATH=$PWD/arch/arm64/configs/surya_defconfig
+export PATH=$PWD/clang/bin:$PATH
+export IMAGE=out/arch/arm64/boot/Image.gz-dtb
+export KBUILD_BUILD_VERSION=$DRONE_BUILD_NUMBER
+export KBUILD_BUILD_HOST=$DRONE_SYSTEM_HOST
+export KBUILD_BUILD_USER=$AUTHOR
 SUBARCH=$ARCH
 KBUILD_COMPILER_STRING=$("$TC_DIR"/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')
 PATH=$TC_DIR/bin/:$PATH
@@ -122,14 +122,14 @@ echo "**** Done, here is your sha1 ****"
 #-----------------------------------------#
 function zipping() {
     cd AnyKernel3 || exit 1
-    zip -r9 UNIKERNEL-SURYA-$DATE.zip *
+    zip -r9 UNICORE-SURYA-$DATE.zip *
     upload
 }
 #-----------------------------------------#
 function upload() {
     ZIP=$(echo *.zip)
     cd ..
-    bot/telegram -f AnyKernel3/UNIKERNEL-SURYA-$DATE.zip "Build completed successfully in $((BUILD_DIFF / 60)) minute(s) and $((BUILD_DIFF % 60)) seconds"
+    bot/telegram -f AnyKernel3/UNICORE-SURYA-$DATE.zip "Build completed successfully in $((BUILD_DIFF / 60)) minute(s) and $((BUILD_DIFF % 60)) seconds"
 
 }
 clone
